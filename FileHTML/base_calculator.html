@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องคำนวณเลขฐาน (รองรับทศนิยม)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+        .calculator-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            align-self: flex-start;
+        }
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1rem;
+        }
+        label {
+            flex-basis: 120px;
+            text-align: left;
+            color: #555;
+            font-weight: bold;
+        }
+        input, select, button {
+            padding: 0.8rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input {
+            flex-grow: 1;
+            text-align: right;
+        }
+        .base-select {
+            flex-basis: 150px;
+        }
+        #operator {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        button {
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            word-wrap: break-word;
+        }
+        .steps-container {
+            margin-top: 1.5rem;
+            text-align: left;
+            display: none;
+        }
+        .step-box {
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            font-family: Arial, sans-serif;
+            color: #0056b3;
+        }
+        .step-box b {
+            font-family: Arial, sans-serif;
+        }
+
+        /* ===== CSS ที่เพิ่มเข้ามาสำหรับมือถือ (Responsive) ===== */
+        @media (max-width: 768px) {
+            .calculator-container {
+                padding: 1.5rem;
+            }
+            .input-group {
+                flex-direction: column; /* จัดเรียงเป็นแนวตั้ง */
+                gap: 8px;
+                align-items: stretch; /* ยืดองค์ประกอบให้เต็มความกว้าง */
+            }
+            label {
+                flex-basis: auto; /* ยกเลิกความกว้างคงที่ */
+                margin-bottom: 0.2rem;
+            }
+            .base-select {
+                flex-basis: auto;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            input, select, button, #result {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <a href="../index.html" class="back-button">&larr; กลับหน้าหลัก</a>
+        <h1>เครื่องคำนวณเลขฐาน</h1>
+        
+        <div class="input-group">
+            <label for="number1">ตัวเลขที่ 1</label>
+            <input type="text" id="number1" placeholder="เช่น 1A.C8">
+            <select id="base1" class="base-select">
+                <option value="2">ฐาน 2</option>
+                <option value="8">ฐาน 8</option>
+                <option value="10" selected>ฐาน 10</option>
+                <option value="16">ฐาน 16</option>
+            </select>
+        </div>
+
+        <select id="operator">
+            <option value="+">+</option>
+            <option value="-">-</option>
+            <option value="*">*</option>
+            <option value="/">/</option>
+        </select>
+
+        <div class="input-group">
+            <label for="number2">ตัวเลขที่ 2</label>
+            <input type="text" id="number2" placeholder="เช่น 101.11">
+            <select id="base2" class="base-select">
+                <option value="2">ฐาน 2</option>
+                <option value="8">ฐาน 8</option>
+                <option value="10" selected>ฐาน 10</option>
+                <option value="16">ฐาน 16</option>
+            </select>
+        </div>
+        
+        <hr style="margin: 1.5rem 0;">
+
+        <div class="input-group">
+            <label>ผลลัพธ์ในฐาน</label>
+            <select id="baseResult" class="base-select" style="flex-grow: 1;">
+                <option value="2">ฐาน 2</option>
+                <option value="8">ฐาน 8</option>
+                <option value="10" selected>ฐาน 10</option>
+                <option value="16">ฐาน 16</option>
+            </select>
+        </div>
+        
+        <button onclick="calculate()">= คำนวณ =</button>
+        <div id="result"></div>
+        <div class="steps-container" id="stepsContainer">
+            <div class="step-box" id="stepsMethod1"></div>
+            <div class="step-box" id="stepsMethod2"></div>
+            <div class="step-box" id="stepsMethod3"></div>
+            <div class="step-box" id="stepsMethod4"></div>
+            <div class="step-box" id="stepsMethod5"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- JavaScript ไม่มีการเปลี่ยนแปลง ---
+        const DIGITS = '0123456789ABCDEF';
+
+        function toDecimal(numStr, base) {
+            const parts = numStr.split('.');
+            const integerPart = parts[0];
+            const fractionalPart = parts[1] || '';
+            let decimalValue = parseInt(integerPart, base);
+            let fractionalValue = 0;
+            if (fractionalPart) {
+                for (let i = 0; i < fractionalPart.length; i++) {
+                    fractionalValue += DIGITS.indexOf(fractionalPart[i].toUpperCase()) * Math.pow(base, -(i + 1));
+                }
+            }
+            return decimalValue + fractionalValue;
+        }
+
+        function fromDecimal(decimalNum, base) {
+            const integerPart = Math.floor(decimalNum);
+            let fractionalPart = decimalNum - integerPart;
+            const integerResult = integerPart.toString(base).toUpperCase();
+            let fractionalResult = '';
+            if (fractionalPart > 0) {
+                for (let i = 0; i < 16 && fractionalPart > 0; i++) {
+                    fractionalPart *= base;
+                    const digit = Math.floor(fractionalPart);
+                    fractionalResult += DIGITS[digit];
+                    fractionalPart -= digit;
+                }
+                return integerResult + '.' + fractionalResult;
+            } else {
+                return integerResult;
+            }
+        }
+
+        function calculate() {
+            const num1Str = document.getElementById('number1').value.trim().toUpperCase();
+            const base1 = parseInt(document.getElementById('base1').value);
+            const num2Str = document.getElementById('number2').value.trim().toUpperCase();
+            const base2 = parseInt(document.getElementById('base2').value);
+            const operator = document.getElementById('operator').value;
+            const baseResult = parseInt(document.getElementById('baseResult').value);
+            const resultElement = document.getElementById('result');
+            const stepsContainer = document.getElementById('stepsContainer');
+            const stepBoxes = [
+                document.getElementById('stepsMethod1'),
+                document.getElementById('stepsMethod2'),
+                document.getElementById('stepsMethod3'),
+                document.getElementById('stepsMethod4'),
+                document.getElementById('stepsMethod5')
+            ];
+            
+            stepsContainer.style.display = 'none';
+
+            if (!num1Str || !num2Str) {
+                resultElement.textContent = "กรุณาป้อนตัวเลขให้ครบทั้งสองช่อง";
+                return;
+            }
+            const num1Dec = toDecimal(num1Str, base1);
+            const num2Dec = toDecimal(num2Str, base2);
+
+            if (isNaN(num1Dec) || isNaN(num2Dec)) {
+                resultElement.textContent = "ค่าที่ป้อนไม่ถูกต้องสำหรับฐานที่เลือก";
+                return;
+            }
+             if (num2Dec === 0 && operator === '/') {
+                resultElement.textContent = "ไม่สามารถหารด้วยศูนย์ได้";
+                return;
+            }
+
+            let resultDec;
+            switch (operator) {
+                case '+': resultDec = num1Dec + num2Dec; break;
+                case '-': resultDec = num1Dec - num2Dec; break;
+                case '*': resultDec = num1Dec * num2Dec; break;
+                case '/': resultDec = num1Dec / num2Dec; break;
+            }
+            
+            const finalResult = fromDecimal(resultDec, baseResult);
+            resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
+
+            const methods = getCalculationMethods(num1Str, base1, num2Str, base2, operator, baseResult, num1Dec, num2Dec, resultDec, finalResult);
+            
+            stepBoxes.forEach((box, index) => {
+                if (methods[index]) {
+                    box.innerHTML = methods[index];
+                    box.style.display = 'block';
+                } else {
+                    box.style.display = 'none';
+                }
+            });
+            
+            stepsContainer.style.display = 'block';
+        }
+
+        function getCalculationMethods(num1Str, base1, num2Str, base2, operator, baseResult, num1Dec, num2Dec, resultDec, finalResult) {
+            const methods = [];
+            const fNum1Dec = num1Dec.toFixed(6);
+            const fNum2Dec = num2Dec.toFixed(6);
+            const fResultDec = resultDec.toFixed(6);
+
+            methods.push(
+                `<h3>วิธีที่ 1: แปลงเป็นฐาน 10 (วิธีมาตรฐาน)</h3>` +
+                `<b>1. แปลงค่าเป็นฐาน 10:</b>\n` +
+                `   (${num1Str})<sub>${base1}</sub> => ${fNum1Dec}<sub>10</sub>\n` +
+                `   (${num2Str})<sub>${base2}</sub> => ${fNum2Dec}<sub>10</sub>\n\n` +
+                `<b>2. คำนวณในฐาน 10:</b>\n` +
+                `   ${fNum1Dec} ${operator} ${fNum2Dec} = ${fResultDec}\n\n` +
+                `<b>3. แปลงผลลัพธ์เป็นฐาน ${baseResult}:</b>\n` +
+                `   (${fResultDec})<sub>10</sub> => ${finalResult}<sub>${baseResult}</sub>`
+            );
+
+            methods.push(
+                `<h3>วิธีที่ 2: แปลงผ่านฐาน 2 (Binary)</h3>`+
+                `<b>1. แปลงค่าเป็นฐาน 2:</b>\n`+
+                `   (${num1Str})<sub>${base1}</sub> => ${fromDecimal(num1Dec, 2)}<sub>2</sub>\n`+
+                `   (${num2Str})<sub>${base2}</sub> => ${fromDecimal(num2Dec, 2)}<sub>2</sub>\n\n`+
+                `<b>2. คำนวณในฐาน 2:</b> (ผลลัพธ์คือ ${fromDecimal(resultDec, 2)}<sub>2</sub>)\n\n`+
+                `<b>3. แปลงผลลัพธ์เป็นฐาน ${baseResult}:</b>\n`+
+                `   (${fromDecimal(resultDec, 2)})<sub>2</sub> => ${finalResult}<sub>${baseResult}</sub>`
+            );
+
+            methods.push(
+                `<h3>วิธีที่ 3: แปลงเป็นฐาน 10 (แบบกระจายค่า)</h3>` +
+                `<b>ตัวตั้ง: (${num1Str})<sub>${base1}</sub></b>\n= ` + getPolynomial(num1Str, base1) + `\n\n` +
+                `<b>ตัวดำเนินการ: (${num2Str})<sub>${base2}</sub></b>\n= ` + getPolynomial(num2Str, base2)
+            );
+
+            if (operator === '+') {
+                 if(base1 === base2) {
+                    methods.push(
+                        `<h3>วิธีที่ 4: ตั้งบวกโดยตรง (ฐานเดียวกัน)</h3>` +
+                        getDirectCalculationDisplay(num1Str, num2Str, operator, finalResult) +
+                        `\n<b>คำอธิบาย:</b> บวกเลขจากขวาไปซ้าย หากผลรวมหลักใดเท่ากับหรือเกิน ${base1}, ให้ใส่ผลลบด้วย ${base1} แล้วทด 1 ไปยังหลักถัดไป`
+                    );
+                }
+                methods.push(`<h3>วิธีที่ 5: แนวคิดเชิงการรวมกลุ่ม</h3>ค่าแรกเปรียบเสมือนมีของอยู่ ${num1Dec} ชิ้น นำมารวมกับค่าที่สองที่มีของอยู่ ${num2Dec} ชิ้น ทำให้ได้ผลลัพธ์รวมเป็น ${resultDec} ชิ้น`);
+            
+            } else if (operator === '-') {
+                 if(base1 === base2) {
+                    methods.push(
+                        `<h3>วิธีที่ 4: ตั้งลบโดยตรง (ฐานเดียวกัน)</h3>` +
+                        getDirectCalculationDisplay(num1Str, num2Str, operator, finalResult) +
+                        `\n<b>คำอธิบาย:</b> ลบเลขจากขวาไปซ้าย หากตัวตั้งน้อยกว่าตัวลบ, ให้ยืมค่า ${base1} จากหลักถัดไป`
+                    );
+                }
+                methods.push(`<h3>วิธีที่ 5: แนวคิดเชิงการหักออก</h3>ค่าแรกเปรียบเสมือนมีของอยู่ ${num1Dec} ชิ้น หักออกด้วยค่าที่สองจำนวน ${num2Dec} ชิ้น ทำให้เหลือผลลัพธ์ ${resultDec} ชิ้น`);
+
+            } else if (operator === '*') {
+                if(base1 === base2) {
+                     methods.push(`<h3>วิธีที่ 4: ตั้งคูณโดยตรง (Long Multiplication)</h3><b>หมายเหตุ:</b> การตั้งคูณโดยตรงในฐานที่ไม่ใช่ 10 มีความซับซ้อนสูง และมักใช้วิธีแปลงเป็นฐาน 10 ในการคำนวณจริง`);
+                }
+                methods.push(`<h3>วิธีที่ 5: แนวคิดแบบบวกซ้ำๆ (Repeated Addition)</h3>การคูณ (${num1Str})<sub>${base1}</sub> ด้วย (${num2Str})<sub>${base2}</sub> คือการนำ ${num1Dec} มาบวกกันทั้งหมด ${num2Dec} ครั้ง ซึ่งได้ผลลัพธ์เท่ากับ ${resultDec}`);
+
+            } else if (operator === '/') {
+                 if(base1 === base2) {
+                     methods.push(`<h3>วิธีที่ 4: ตั้งหารยาว (Long Division)</h3><b>หมายเหตุ:</b> การตั้งหารยาวในฐานที่ไม่ใช่ 10 มีความซับซ้อนสูง และมักใช้วิธีแปลงเป็นฐาน 10 ในการคำนวณจริง`);
+                }
+                methods.push(`<h3>วิธีที่ 5: แนวคิดแบบลบซ้ำๆ (Repeated Subtraction)</h3>การหาร (${num1Str})<sub>${base1}</sub> ด้วย (${num2Str})<sub>${base2}</sub> คือการหาว่าเราสามารถลบ ${num2Dec} ออกจาก ${num1Dec} ได้กี่ครั้ง ซึ่งทำได้ ${Math.floor(num1Dec/num2Dec)} ครั้ง และเหลือเศษ ${num1Dec % num2Dec}`);
+            }
+
+            return methods;
+        }
+
+        function getPolynomial(numStr, base) {
+            const [integerPart, fractionalPart = ''] = numStr.split('.');
+            let expansion = [];
+            for (let i = 0; i < integerPart.length; i++) {
+                expansion.push(`(${DIGITS.indexOf(integerPart[i])} * ${base}<sup>${integerPart.length - 1 - i}</sup>)`);
+            }
+            for (let i = 0; i < fractionalPart.length; i++) {
+                expansion.push(`(${DIGITS.indexOf(fractionalPart[i])} * ${base}<sup>${-(i + 1)}</sup>)`);
+            }
+            return expansion.join(' + ');
+        }
+        
+        function getDirectCalculationDisplay(num1Str, num2Str, operator, finalResult) {
+            const [int1, frac1 = ''] = num1Str.split('.');
+            const [int2, frac2 = ''] = num2Str.split('.');
+            const maxFrac = Math.max(frac1.length, frac2.length);
+            const alignedNum1 = int1.padStart(Math.max(int1.length, int2.length), ' ') + '.' + frac1.padEnd(maxFrac, '0');
+            const alignedNum2 = int2.padStart(Math.max(int1.length, int2.length), ' ') + '.' + frac2.padEnd(maxFrac, '0');
+            let text = `  ${alignedNum1}\n`;
+            text += ` ${operator}${alignedNum2}\n`;
+            text += `-`.repeat(alignedNum1.length + 2) + `\n`;
+            text += `  ${finalResult.padStart(alignedNum1.length, ' ')}\n`;
+            return text;
+        }
+
+    </script>
+
+</body>
+</html>

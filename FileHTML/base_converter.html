@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมแปลงเลขฐาน (รองรับทศนิยม)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+        .converter-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            align-self: flex-start;
+        }
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        h1 span {
+            display: block;
+            font-size: 0.6em;
+            color: #6c757d;
+            font-weight: normal;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            text-align: left;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input {
+            text-align: right;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            word-wrap: break-word;
+            min-height: 25px;
+        }
+        #calculation-steps {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* ===== CSS ที่เพิ่มเข้ามาสำหรับมือถือ (Responsive) ===== */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px 0; /* ลด padding รอบนอกสุด */
+            }
+            .converter-container {
+                width: 95%; /* ขยายความกว้างของกล่องให้เกือบเต็มจอ */
+                padding: 1.5rem; /* ลด padding ด้านในกล่อง */
+            }
+            h1 {
+                font-size: 1.8rem; /* ลดขนาดหัวข้อหลัก */
+            }
+            input, select, button, #result {
+                font-size: 0.9rem; /* ลดขนาดตัวอักษรใน input และปุ่ม */
+            }
+            .back-button {
+                margin-bottom: 1rem;
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="converter-container">
+
+        <a href="../index.html" class="back-button">&larr; กลับหน้าหลัก</a>
+
+        <h1>
+            เครื่องมือแปลงเลขฐาน
+            <span>(รองรับทศนิยม)</span>
+        </h1>
+
+        <div class="input-group">
+            <label for="numberInput">ป้อนตัวเลข:</label>
+            <input type="text" id="numberInput" placeholder="ใส่เลขที่ต้องการแปลง (เช่น 101.11)">
+        </div>
+
+        <div class="input-group">
+            <label for="fromBase">จากฐาน:</label>
+            <select id="fromBase">
+                <option value="2">ฐาน 2 (Binary)</option>
+                <option value="8">ฐาน 8 (Octal)</option>
+                <option value="10" selected>ฐาน 10 (Decimal)</option>
+                <option value="16">ฐาน 16 (Hexadecimal)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="toBase">ไปเป็นฐาน:</label>
+            <select id="toBase">
+                <option value="2">ฐาน 2 (Binary)</option>
+                <option value="8">ฐาน 8 (Octal)</option>
+                <option value="10">ฐาน 10 (Decimal)</option>
+                <option value="16" selected>ฐาน 16 (Hexadecimal)</option>
+            </select>
+        </div>
+
+        <button onclick="convertBase()">แปลงค่า</button>
+
+        <div id="result"></div>
+        <div id="calculation-steps"></div>
+    </div>
+
+    <script>
+        // --- JavaScript ไม่มีการเปลี่ยนแปลง ---
+        const DIGITS = '0123456789ABCDEF';
+        function toDec(value) {
+            return DIGITS.indexOf(value.toUpperCase());
+        }
+        function fromDec(value) {
+            return DIGITS[value];
+        }
+
+        function convertIntegerPart(integerPart, fromBase, toBase) {
+            if (!integerPart || integerPart === '0') return { result: '0', steps: '' };
+            const decimalValue = parseInt(integerPart, fromBase);
+            const result = decimalValue.toString(toBase).toUpperCase();
+            
+            let steps = `--- ส่วนหน้าจุดทศนิยม (${integerPart}) ---\n`;
+            if (fromBase !== 10) {
+                steps += `แปลง (${integerPart}) ฐาน ${fromBase} เป็นฐาน 10 = ${decimalValue}\n`;
+            }
+            if (toBase !== 10) {
+                steps += `แปลง (${decimalValue}) ฐาน 10 เป็นฐาน ${toBase} = ${result}\n`;
+            }
+            return { result, steps };
+        }
+
+        function convertFractionalPart(fractionalPart, fromBase, toBase) {
+            if (!fractionalPart) return { result: '', steps: '' };
+
+            let steps = `\n--- ส่วนหลังจุดทศนิยม (.${fractionalPart}) ---\n`;
+            
+            let decimalValue = 0;
+            if (fromBase !== 10) {
+                for (let i = 0; i < fractionalPart.length; i++) {
+                    decimalValue += toDec(fractionalPart[i]) * Math.pow(fromBase, -(i + 1));
+                }
+                steps += `แปลง (.${fractionalPart}) ฐาน ${fromBase} เป็นฐาน 10 = ${decimalValue}\n`;
+            } else {
+                decimalValue = parseFloat('0.' + fractionalPart);
+            }
+            
+            let result = '';
+            if (toBase !== 10) {
+                steps += `แปลง (${decimalValue}) ฐาน 10 เป็นฐาน ${toBase}:\n`;
+                let remaining = decimalValue;
+                for (let i = 0; i < 16 && remaining > 0; i++) { // Limit to 16 fractional digits
+                    const multiplication = remaining * toBase;
+                    const integerDigit = Math.floor(multiplication);
+                    steps += `${remaining.toFixed(4)} * ${toBase} = ${multiplication.toFixed(4)} -> ได้เลข ${fromDec(integerDigit)}\n`;
+                    result += fromDec(integerDigit);
+                    remaining = multiplication - integerDigit;
+                }
+            } else {
+                result = decimalValue.toString().substring(2);
+            }
+
+            return { result, steps };
+        }
+
+        function convertBase() {
+            const numberInput = document.getElementById('numberInput').value.trim();
+            const fromBase = parseInt(document.getElementById('fromBase').value);
+            const toBase = parseInt(document.getElementById('toBase').value);
+            const resultElement = document.getElementById('result');
+            const stepsElement = document.getElementById('calculation-steps');
+
+            resultElement.textContent = '';
+            stepsElement.style.display = 'none';
+
+            if (numberInput === "") {
+                resultElement.textContent = "กรุณาป้อนตัวเลข";
+                return;
+            }
+
+            const parts = numberInput.split('.');
+            const integerPart = parts[0];
+            const fractionalPart = parts[1] || '';
+
+            const intConversion = convertIntegerPart(integerPart, fromBase, toBase);
+            const fracConversion = convertFractionalPart(fractionalPart, fromBase, toBase);
+
+            let finalResult = intConversion.result;
+            if (fracConversion.result) {
+                finalResult += '.' + fracConversion.result;
+            }
+
+            let allSteps = intConversion.steps + fracConversion.steps;
+
+            if (fromBase === toBase) {
+                allSteps = "ไม่จำเป็นต้องคำนวณ (ฐานต้นทางและปลายทางเหมือนกัน)";
+            }
+
+            resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
+            stepsElement.textContent = allSteps;
+            stepsElement.style.display = 'block';
+        }
+
+        document.getElementById('numberInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                convertBase();
+            }
+        });
+    </script>
+
+</body>
+</html>
