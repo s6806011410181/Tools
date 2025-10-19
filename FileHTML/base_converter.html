@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>โปรแกรมแปลงเลขฐาน</title>
+    <title>โปรแกรมแปลงเลขฐาน (รองรับทศนิยม)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px 0; /* เพิ่ม padding ด้านบนล่าง */
+            padding: 20px 0;
         }
         .converter-container {
             background-color: white;
@@ -21,7 +21,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             width: 90%;
-            max-width: 500px; /* ขยายความกว้างเล็กน้อย */
+            max-width: 600px; /* ขยายความกว้างเพื่อรองรับวิธีคิดที่ยาวขึ้น */
             text-align: center;
         }
         h1 {
@@ -62,7 +62,7 @@
         #result {
             margin-top: 1.5rem;
             padding: 1rem;
-            background-color: #d4edda; /* สีเขียวอ่อนสำหรับผลลัพธ์ */
+            background-color: #d4edda;
             border: 1px solid #c3e6cb;
             border-radius: 5px;
             font-size: 1.2rem;
@@ -70,7 +70,6 @@
             word-wrap: break-word;
             min-height: 25px;
         }
-        /* ===== CSS ที่เพิ่มเข้ามาสำหรับแสดงวิธีคิด ===== */
         #calculation-steps {
             margin-top: 1.5rem;
             padding: 1rem;
@@ -78,20 +77,22 @@
             border: 1px solid #dee2e6;
             border-radius: 5px;
             text-align: left;
-            font-family: monospace; /* ใช้ฟอนต์ที่ดูเหมือนโค้ด อ่านง่าย */
-            white-space: pre-wrap; /* ทำให้ขึ้นบรรทัดใหม่ตามโค้ด */
-            display: none; /* ซ่อนไว้ตอนแรก */
+            font-family: monospace;
+            white-space: pre-wrap;
+            display: none;
+            max-height: 300px; /* จำกัดความสูงและเพิ่ม scrollbar */
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
 
     <div class="converter-container">
-        <h1>เครื่องมือแปลงเลขฐาน</h1>
+        <h1>เครื่องมือแปลงเลขฐาน (รองรับทศนิยม)</h1>
 
         <div class="input-group">
             <label for="numberInput">ป้อนตัวเลข:</label>
-            <input type="text" id="numberInput" placeholder="ใส่เลขที่ต้องการแปลง">
+            <input type="text" id="numberInput" placeholder="ใส่เลขที่ต้องการแปลง (เช่น 101.11)">
         </div>
 
         <div class="input-group">
@@ -116,62 +117,75 @@
 
         <button onclick="convertBase()">แปลงค่า</button>
 
-        <div id="result">
-            </div>
-        
-        <div id="calculation-steps">
-            </div>
+        <div id="result"></div>
+        <div id="calculation-steps"></div>
     </div>
 
     <script>
-        // ฟังก์ชันสำหรับแปลงค่า Hex (A-F) เป็นตัวเลข
-        function hexCharToDec(char) {
-            return '0123456789ABCDEF'.indexOf(char.toUpperCase());
+        // --- Helper Functions ---
+        const DIGITS = '0123456789ABCDEF';
+        function toDec(value, base) {
+            return DIGITS.indexOf(value.toUpperCase());
+        }
+        function fromDec(value) {
+            return DIGITS[value];
         }
 
-        // ฟังก์ชันสร้างขั้นตอนการแปลงเป็นฐาน 10
-        function toDecimalSteps(number, fromBase) {
-            if (fromBase === 10) return "ตัวเลขอยู่ในฐาน 10 อยู่แล้ว\n";
+        // --- Core Conversion Logic ---
 
-            let steps = `ขั้นตอนที่ 1: แปลง (${number}) ฐาน ${fromBase} เป็นฐาน 10\n\n`;
-            const digits = number.toString().split('').reverse();
+        // 1. แปลงส่วนหน้าจุด (จำนวนเต็ม)
+        function convertIntegerPart(integerPart, fromBase, toBase) {
+            if (!integerPart || integerPart === '0') return { result: '0', steps: '' };
+            const decimalValue = parseInt(integerPart, fromBase);
+            const result = decimalValue.toString(toBase).toUpperCase();
+            
+            let steps = `--- ส่วนหน้าจุดทศนิยม (${integerPart}) ---\n`;
+            if (fromBase !== 10) {
+                steps += `แปลง (${integerPart}) ฐาน ${fromBase} เป็นฐาน 10 = ${decimalValue}\n`;
+            }
+            if (toBase !== 10) {
+                steps += `แปลง (${decimalValue}) ฐาน 10 เป็นฐาน ${toBase} = ${result}\n`;
+            }
+            return { result, steps };
+        }
+
+        // 2. แปลงส่วนหลังจุด (ทศนิยม)
+        function convertFractionalPart(fractionalPart, fromBase, toBase) {
+            if (!fractionalPart) return { result: '', steps: '' };
+
+            let steps = `\n--- ส่วนหลังจุดทศนิยม (.${fractionalPart}) ---\n`;
+            
+            // Step A: Fractional -> Decimal
             let decimalValue = 0;
-            let calculation = [];
-
-            for (let i = 0; i < digits.length; i++) {
-                const digit = fromBase === 16 ? hexCharToDec(digits[i]) : parseInt(digits[i]);
-                const termValue = digit * Math.pow(fromBase, i);
-                decimalValue += termValue;
-                calculation.push(`(${digits[i]} * ${fromBase}^${i})`);
+            if (fromBase !== 10) {
+                for (let i = 0; i < fractionalPart.length; i++) {
+                    decimalValue += toDec(fractionalPart[i], fromBase) * Math.pow(fromBase, -(i + 1));
+                }
+                steps += `แปลง (.${fractionalPart}) ฐาน ${fromBase} เป็นฐาน 10 = ${decimalValue}\n`;
+            } else {
+                decimalValue = parseFloat('0.' + fractionalPart);
             }
             
-            steps += calculation.reverse().join(' + ') + `\n`;
-            steps += `= ${decimalValue}\n`;
-            return steps;
-        }
-        
-        // ฟังก์ชันสร้างขั้นตอนการแปลงจากฐาน 10
-        function fromDecimalSteps(decimal, toBase) {
-            if (toBase === 10) return "ไม่ต้องแปลงเพิ่ม เนื่องจากปลายทางเป็นฐาน 10\n";
-            
-            let steps = `\nขั้นตอนที่ 2: แปลง (${decimal}) ฐาน 10 เป็นฐาน ${toBase}\n\n`;
-            if (decimal === 0) return steps + "0 / " + toBase + " = 0 เศษ 0\nผลลัพธ์คือ 0";
-
-            let tempDecimal = decimal;
-            let remainders = [];
-            
-            while (tempDecimal > 0) {
-                const remainder = tempDecimal % toBase;
-                const quotient = Math.floor(tempDecimal / toBase);
-                steps += `${tempDecimal} / ${toBase} = ${quotient} เศษ ${remainder < 10 ? remainder : 'ABCDEF'[remainder - 10]}\n`;
-                remainders.unshift(remainder < 10 ? remainder : 'ABCDEF'[remainder - 10]);
-                tempDecimal = quotient;
+            // Step B: Decimal -> Target Base
+            let result = '';
+            if (toBase !== 10) {
+                steps += `แปลง (${decimalValue}) ฐาน 10 เป็นฐาน ${toBase}:\n`;
+                let remaining = decimalValue;
+                for (let i = 0; i < 16 && remaining > 0; i++) { // Limit to 16 fractional digits
+                    const multiplication = remaining * toBase;
+                    const integerDigit = Math.floor(multiplication);
+                    steps += `${remaining.toFixed(4)} * ${toBase} = ${multiplication.toFixed(4)} -> ได้เลข ${fromDec(integerDigit)}\n`;
+                    result += fromDec(integerDigit);
+                    remaining = multiplication - integerDigit;
+                }
+            } else {
+                result = decimalValue.toString().substring(2); // Remove "0."
             }
 
-            steps += `\nนำเศษมาเรียงต่อกันจากล่างขึ้นบน จะได้: ${remainders.join('')}`;
-            return steps;
+            return { result, steps };
         }
 
+        // --- Main Function ---
         function convertBase() {
             const numberInput = document.getElementById('numberInput').value.trim();
             const fromBase = parseInt(document.getElementById('fromBase').value);
@@ -179,46 +193,42 @@
             const resultElement = document.getElementById('result');
             const stepsElement = document.getElementById('calculation-steps');
 
+            // Reset UI
             resultElement.textContent = '';
             stepsElement.style.display = 'none';
 
             if (numberInput === "") {
                 resultElement.textContent = "กรุณาป้อนตัวเลข";
-                resultElement.style.color = 'red';
-                return;
-            }
-            
-            // ใช้ parseInt เพื่อตรวจสอบความถูกต้องของ Input และแปลงเป็นฐาน 10
-            const decimalValue = parseInt(numberInput, fromBase);
-
-            if (isNaN(decimalValue)) {
-                resultElement.textContent = "ตัวเลขไม่ถูกต้องสำหรับฐานที่เลือก";
-                resultElement.style.color = 'red';
                 return;
             }
 
-            // --- สร้างวิธีคิด ---
-            let allSteps = "";
-            if(fromBase !== 10) {
-                allSteps += toDecimalSteps(numberInput, fromBase);
-            }
-            if(toBase !== 10) {
-                allSteps += fromDecimalSteps(decimalValue, toBase);
+            // --- Logic Starts ---
+            const parts = numberInput.split('.');
+            const integerPart = parts[0];
+            const fractionalPart = parts[1] || '';
+
+            // Convert integer part
+            const intConversion = convertIntegerPart(integerPart, fromBase, toBase);
+
+            // Convert fractional part
+            const fracConversion = convertFractionalPart(fractionalPart, fromBase, toBase);
+
+            // Combine results
+            let finalResult = intConversion.result;
+            if (fracConversion.result) {
+                finalResult += '.' + fracConversion.result;
             }
 
-            // ถ้าไม่มีขั้นตอน (เช่น แปลงจากฐาน 10 ไป 10) ให้แสดงข้อความ
-            if(allSteps.trim() === "") {
+            let allSteps = intConversion.steps + fracConversion.steps;
+
+            if (fromBase === toBase) {
                 allSteps = "ไม่จำเป็นต้องคำนวณ (ฐานต้นทางและปลายทางเหมือนกัน)";
             }
 
-            // แสดงวิธีคิด
+            // Display results
+            resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
             stepsElement.textContent = allSteps;
             stepsElement.style.display = 'block';
-
-            // แสดงผลลัพธ์
-            const finalResult = decimalValue.toString(toBase).toUpperCase();
-            resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
-            resultElement.style.color = '#155724';
         }
 
         document.getElementById('numberInput').addEventListener('keyup', function(event) {
