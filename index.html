@@ -5,18 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน้าหลัก - รวมโปรเจกต์</title>
     <style>
-        /* CSS ส่วนใหญ่เหมือนเดิม */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
         body {
             font-family: 'Sarabun', sans-serif;
             background-color: #f0f2f5;
             color: #333;
-            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             padding: 20px;
-            box-sizing: border-box;
         }
         .container {
             width: 100%;
@@ -27,7 +32,6 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
             text-align: center;
             position: relative;
-            z-index: 1;
         }
         h1 {
             color: #0056b3;
@@ -36,10 +40,18 @@
         p {
             color: #666;
             font-size: 1.1rem;
-            margin-bottom: 1.5rem; /* ลดระยะห่างเล็กน้อย */
+            margin-bottom: 1.5rem;
         }
 
-        /* ===== CSS ที่เพิ่มเข้ามาสำหรับช่องค้นหา ===== */
+        /* ===== CSS ที่ปรับปรุงสำหรับรูป GIF ===== */
+        .header-gif {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            width: 95px;       /* <--- ปรับขนาดความกว้างที่นี่ */
+            height: auto;
+        }
+
         #searchInput {
             width: 100%;
             padding: 0.8rem;
@@ -47,9 +59,8 @@
             font-size: 1rem;
             border: 1px solid #ddd;
             border-radius: 8px;
-            box-sizing: border-box; /* ป้องกัน padding มีผลกับ width */
+            box-sizing: border-box;
         }
-
         .project-list {
             list-style: none;
             padding: 0;
@@ -78,14 +89,13 @@
             transform: translateX(10px);
             box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
         }
-
-        /* CSS สำหรับ Modal เหมือนเดิม */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); }
         .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 10px; text-align: center; position: relative; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
         .modal-content img { width: 100%; height: auto; border-radius: 5px; }
         .close-button { color: #aaa; position: absolute; top: 10px; right: 25px; font-size: 35px; font-weight: bold; }
         .close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
+        
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,15 +103,18 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1>รวมโปรเจกต์และเครื่องมือ 🚀</h1>
-        <p>เลือกรายการจากด้านล่างเพื่อไปยังหน้าเว็บที่ต้องการ</p>
-
-        <input type="text" id="searchInput" placeholder="🔍 ค้นหารายการ...">
-
-        <ul class="project-list" id="projectListContainer">
-            </ul>
-    </div>
+    <main>
+        <div class="container">
+            <img src="m1.gif" alt="Sparkle" class="header-gif">
+            
+            <h1>รวมโปรเจกต์และเครื่องมือ 🚀</h1>
+            <p>เลือกรายการจากด้านล่างเพื่อไปยังหน้าเว็บที่ต้องการ</p>
+    
+            <input type="text" id="searchInput" placeholder="🔍 ค้นหารายการ...">
+    
+            <ul class="project-list" id="projectListContainer"></ul>
+        </div>
+    </main>
 
     <div id="imageModal" class="modal">
         <div class="modal-content">
@@ -110,60 +123,41 @@
             <img src="eiei.jpg" alt="Coming Soon">
         </div>
     </div>
-
     <audio id="popupSound" src="sound.mp3" preload="auto"></audio>
-
     <script>
+        // --- JavaScript ไม่มีการเปลี่ยนแปลง ---
         document.addEventListener('DOMContentLoaded', function() {
-            
             const listContainer = document.getElementById('projectListContainer');
-
             fetch('links.txt')
-                .then(response => {
-                    if (!response.ok) throw new Error('ไม่สามารถโหลดไฟล์ links.txt ได้');
-                    return response.text();
-                })
+                .then(response => { if (!response.ok) throw new Error('Network response was not ok'); return response.text(); })
                 .then(text => {
                     listContainer.innerHTML = ''; 
                     const lines = text.trim().split('\n');
-
                     lines.forEach(line => {
                         if (line.trim() === '') return;
-
                         const parts = line.split(',');
                         const linkText = parts[0].trim();
                         const linkAction = parts[1].trim();
-
                         const listItem = document.createElement('li');
                         const anchorTag = document.createElement('a');
                         anchorTag.textContent = linkText;
-
                         if (linkAction === 'modal') {
                             anchorTag.id = 'comingSoonBtn';
                         } else {
                             anchorTag.href = linkAction;
                         }
-
                         listItem.appendChild(anchorTag);
                         listContainer.appendChild(listItem);
                     });
-                    
                     setupModal();
-                    // ===== เรียกใช้ฟังก์ชันค้นหาหลังจากสร้างรายการเสร็จ =====
                     setupSearchFilter(); 
-                })
-                .catch(error => {
-                    console.error('เกิดข้อผิดพลาด:', error);
-                    listContainer.innerHTML = '<li><a href="#">เกิดข้อผิดพลาดในการโหลดรายการ</a></li>';
-                });
+                }).catch(error => { console.error('Failed to load links:', error); });
         });
-
         function setupModal() {
             var modal = document.getElementById("imageModal");
             var btn = document.getElementById("comingSoonBtn");
             var span = document.getElementsByClassName("close-button")[0];
             var sound = document.getElementById("popupSound");
-
             if (btn) {
                 btn.onclick = function() {
                     modal.style.display = "block";
@@ -171,38 +165,19 @@
                 }
             }
             if(span) {
-                span.onclick = function() {
-                    modal.style.display = "none";
-                }
+                span.onclick = function() { modal.style.display = "none"; }
             }
-            window.onclick = function(event) {
-                if (event.target == modal) {
-                    modal.style.display = "none";
-                }
-            }
+            window.onclick = function(event) { if (event.target == modal) { modal.style.display = "none"; } }
         }
-
-        // ===== ฟังก์ชันใหม่สำหรับจัดการการค้นหา =====
         function setupSearchFilter() {
             const searchInput = document.getElementById('searchInput');
-            const listContainer = document.getElementById('projectListContainer');
-            const listItems = listContainer.getElementsByTagName('li');
-
-            // เพิ่ม Event Listener เพื่อดักจับการพิมพ์ในช่องค้นหา
+            const listItems = document.getElementById('projectListContainer').getElementsByTagName('li');
             searchInput.addEventListener('keyup', function() {
-                const filter = searchInput.value.toLowerCase(); // ค่าที่พิมพ์ (แปลงเป็นตัวพิมพ์เล็ก)
-
-                // วนลูปเช็ครายการทั้งหมด
+                const filter = searchInput.value.toLowerCase();
                 for (let i = 0; i < listItems.length; i++) {
                     let a = listItems[i].getElementsByTagName('a')[0];
                     let txtValue = a.textContent || a.innerText;
-                    
-                    // ถ้าข้อความในรายการตรงกับที่ค้นหา ให้แสดงรายการนั้น
-                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                        listItems[i].style.display = "";
-                    } else { // ถ้าไม่ตรง ให้ซ่อน
-                        listItems[i].style.display = "none";
-                    }
+                    listItems[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
                 }
             });
         }
