@@ -21,12 +21,20 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             width: 90%;
-            max-width: 600px; /* ขยายความกว้างเพื่อรองรับวิธีคิดที่ยาวขึ้น */
+            max-width: 600px;
             text-align: center;
         }
         h1 {
             color: #333;
             margin-bottom: 1.5rem;
+            line-height: 1.2; /* ปรับระยะห่างระหว่างบรรทัดของ h1 */
+        }
+        /* ===== CSS ที่เพิ่มเข้ามาสำหรับหัวข้อรอง ===== */
+        h1 span {
+            display: block; /* ทำให้ขึ้นบรรทัดใหม่ */
+            font-size: 0.6em; /* ขนาดตัวอักษรเล็กลง */
+            color: #6c757d; /* สีเทา */
+            font-weight: normal; /* ทำให้เป็นตัวปกติ ไม่ใช่ตัวหนา */
         }
         .input-group {
             margin-bottom: 1rem;
@@ -80,7 +88,7 @@
             font-family: monospace;
             white-space: pre-wrap;
             display: none;
-            max-height: 300px; /* จำกัดความสูงและเพิ่ม scrollbar */
+            max-height: 300px;
             overflow-y: auto;
         }
     </style>
@@ -88,7 +96,10 @@
 <body>
 
     <div class="converter-container">
-        <h1>เครื่องมือแปลงเลขฐาน (รองรับทศนิยม)</h1>
+        <h1>
+            เครื่องมือแปลงเลขฐาน
+            <span>(รองรับทศนิยม)</span>
+        </h1>
 
         <div class="input-group">
             <label for="numberInput">ป้อนตัวเลข:</label>
@@ -122,7 +133,7 @@
     </div>
 
     <script>
-        // --- Helper Functions ---
+        // --- JavaScript ไม่มีการเปลี่ยนแปลง ---
         const DIGITS = '0123456789ABCDEF';
         function toDec(value, base) {
             return DIGITS.indexOf(value.toUpperCase());
@@ -131,9 +142,6 @@
             return DIGITS[value];
         }
 
-        // --- Core Conversion Logic ---
-
-        // 1. แปลงส่วนหน้าจุด (จำนวนเต็ม)
         function convertIntegerPart(integerPart, fromBase, toBase) {
             if (!integerPart || integerPart === '0') return { result: '0', steps: '' };
             const decimalValue = parseInt(integerPart, fromBase);
@@ -149,13 +157,11 @@
             return { result, steps };
         }
 
-        // 2. แปลงส่วนหลังจุด (ทศนิยม)
         function convertFractionalPart(fractionalPart, fromBase, toBase) {
             if (!fractionalPart) return { result: '', steps: '' };
 
             let steps = `\n--- ส่วนหลังจุดทศนิยม (.${fractionalPart}) ---\n`;
             
-            // Step A: Fractional -> Decimal
             let decimalValue = 0;
             if (fromBase !== 10) {
                 for (let i = 0; i < fractionalPart.length; i++) {
@@ -166,12 +172,11 @@
                 decimalValue = parseFloat('0.' + fractionalPart);
             }
             
-            // Step B: Decimal -> Target Base
             let result = '';
             if (toBase !== 10) {
                 steps += `แปลง (${decimalValue}) ฐาน 10 เป็นฐาน ${toBase}:\n`;
                 let remaining = decimalValue;
-                for (let i = 0; i < 16 && remaining > 0; i++) { // Limit to 16 fractional digits
+                for (let i = 0; i < 16 && remaining > 0; i++) {
                     const multiplication = remaining * toBase;
                     const integerDigit = Math.floor(multiplication);
                     steps += `${remaining.toFixed(4)} * ${toBase} = ${multiplication.toFixed(4)} -> ได้เลข ${fromDec(integerDigit)}\n`;
@@ -179,13 +184,12 @@
                     remaining = multiplication - integerDigit;
                 }
             } else {
-                result = decimalValue.toString().substring(2); // Remove "0."
+                result = decimalValue.toString().substring(2);
             }
 
             return { result, steps };
         }
 
-        // --- Main Function ---
         function convertBase() {
             const numberInput = document.getElementById('numberInput').value.trim();
             const fromBase = parseInt(document.getElementById('fromBase').value);
@@ -193,7 +197,6 @@
             const resultElement = document.getElementById('result');
             const stepsElement = document.getElementById('calculation-steps');
 
-            // Reset UI
             resultElement.textContent = '';
             stepsElement.style.display = 'none';
 
@@ -202,18 +205,13 @@
                 return;
             }
 
-            // --- Logic Starts ---
             const parts = numberInput.split('.');
             const integerPart = parts[0];
             const fractionalPart = parts[1] || '';
 
-            // Convert integer part
             const intConversion = convertIntegerPart(integerPart, fromBase, toBase);
-
-            // Convert fractional part
             const fracConversion = convertFractionalPart(fractionalPart, fromBase, toBase);
 
-            // Combine results
             let finalResult = intConversion.result;
             if (fracConversion.result) {
                 finalResult += '.' + fracConversion.result;
@@ -225,7 +223,6 @@
                 allSteps = "ไม่จำเป็นต้องคำนวณ (ฐานต้นทางและปลายทางเหมือนกัน)";
             }
 
-            // Display results
             resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
             stepsElement.textContent = allSteps;
             stepsElement.style.display = 'block';
