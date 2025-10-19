@@ -10,7 +10,7 @@
             background-color: #f4f4f4;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* เปลี่ยนเป็น align-items: flex-start */
             min-height: 100vh;
             margin: 0;
             padding: 20px 0;
@@ -21,7 +21,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             width: 90%;
-            max-width: 600px;
+            max-width: 700px; /* ขยายความกว้าง */
             text-align: center;
         }
         h1 {
@@ -81,17 +81,20 @@
             font-weight: bold;
             word-wrap: break-word;
         }
-        .step-box {
+        .steps-container {
             margin-top: 1.5rem;
+            text-align: left;
+            display: none;
+        }
+        .step-box {
             padding: 1rem;
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 5px;
             font-family: monospace;
             white-space: pre-wrap;
-            text-align: left;
-            display: none;
-            max-height: 300px; /* เพิ่ม scrollbar เมื่อเนื้อหายาว */
+            margin-top: 10px;
+            max-height: 300px;
             overflow-y: auto;
         }
         .step-box h3 {
@@ -105,7 +108,6 @@
 
     <div class="calculator-container">
         <h1>เครื่องคำนวณเลขฐาน</h1>
-
         <div class="input-group">
             <label for="number1">ตัวเลขที่ 1</label>
             <input type="text" id="number1" placeholder="เช่น 1A.C8">
@@ -116,14 +118,12 @@
                 <option value="16">ฐาน 16</option>
             </select>
         </div>
-
         <select id="operator">
             <option value="+">+</option>
             <option value="-">-</option>
             <option value="*">*</option>
             <option value="/">/</option>
         </select>
-
         <div class="input-group">
             <label for="number2">ตัวเลขที่ 2</label>
             <input type="text" id="number2" placeholder="เช่น 101.11">
@@ -134,9 +134,7 @@
                 <option value="16">ฐาน 16</option>
             </select>
         </div>
-        
         <hr style="margin: 1.5rem 0;">
-
         <div class="input-group">
             <label>ผลลัพธ์ในฐาน</label>
             <select id="baseResult" class="base-select" style="flex-grow: 1;">
@@ -146,47 +144,40 @@
                 <option value="16">ฐาน 16</option>
             </select>
         </div>
-        
         <button onclick="calculate()">= คำนวณ =</button>
-
         <div id="result"></div>
-        <div class="step-box" id="stepsMethod1"></div>
+        <div class="steps-container" id="stepsContainer">
+            <div class="step-box" id="stepsMethod1"></div>
+            <div class="step-box" id="stepsMethod2"></div>
+            <div class="step-box" id="stepsMethod3"></div>
+        </div>
     </div>
 
     <script>
         const DIGITS = '0123456789ABCDEF';
 
-        // --- ฟังก์ชันแปลงเลขฐานใดๆ (ทั้งจำนวนเต็มและทศนิยม) เป็นเลขทศนิยมฐาน 10 ---
         function toDecimal(numStr, base) {
             const parts = numStr.split('.');
             const integerPart = parts[0];
             const fractionalPart = parts[1] || '';
-
-            // แปลงส่วนหน้าจุด
             let decimalValue = parseInt(integerPart, base);
-
-            // แปลงส่วนหลังจุด
             let fractionalValue = 0;
-            for (let i = 0; i < fractionalPart.length; i++) {
-                const digit = DIGITS.indexOf(fractionalPart[i].toUpperCase());
-                fractionalValue += digit * Math.pow(base, -(i + 1));
+            if (fractionalPart) {
+                for (let i = 0; i < fractionalPart.length; i++) {
+                    const digit = DIGITS.indexOf(fractionalPart[i].toUpperCase());
+                    fractionalValue += digit * Math.pow(base, -(i + 1));
+                }
             }
-
             return decimalValue + fractionalValue;
         }
 
-        // --- ฟังก์ชันแปลงเลขทศนิยมฐาน 10 เป็นเลขฐานใดๆ (ทั้งจำนวนเต็มและทศนิยม) ---
         function fromDecimal(decimalNum, base) {
             const integerPart = Math.floor(decimalNum);
             let fractionalPart = decimalNum - integerPart;
-
-            // แปลงส่วนหน้าจุด
             const integerResult = integerPart.toString(base).toUpperCase();
-
-            // แปลงส่วนหลังจุด
             let fractionalResult = '';
             if (fractionalPart > 0) {
-                for (let i = 0; i < 16 && fractionalPart > 0; i++) { // จำกัดทศนิยม 16 ตำแหน่ง
+                for (let i = 0; i < 16 && fractionalPart > 0; i++) {
                     fractionalPart *= base;
                     const digit = Math.floor(fractionalPart);
                     fractionalResult += DIGITS[digit];
@@ -198,7 +189,6 @@
             }
         }
 
-        // --- ฟังก์ชันหลัก ---
         function calculate() {
             const num1Str = document.getElementById('number1').value.trim().toUpperCase();
             const base1 = parseInt(document.getElementById('base1').value);
@@ -208,15 +198,18 @@
             const baseResult = parseInt(document.getElementById('baseResult').value);
 
             const resultElement = document.getElementById('result');
-            const stepsElement = document.getElementById('stepsMethod1');
-            stepsElement.style.display = 'none';
+            const stepsContainer = document.getElementById('stepsContainer');
+            const stepsMethod1 = document.getElementById('stepsMethod1');
+            const stepsMethod2 = document.getElementById('stepsMethod2');
+            const stepsMethod3 = document.getElementById('stepsMethod3');
+            
+            stepsContainer.style.display = 'none';
 
             if (!num1Str || !num2Str) {
                 resultElement.textContent = "กรุณาป้อนตัวเลขให้ครบทั้งสองช่อง";
                 return;
             }
 
-            // 1. แปลงตัวเลขทั้งสองเป็นฐาน 10 (ทศนิยม)
             const num1Dec = toDecimal(num1Str, base1);
             const num2Dec = toDecimal(num2Str, base2);
 
@@ -229,32 +222,90 @@
                 return;
             }
 
-            // 2. คำนวณในฐาน 10
             let resultDec;
             switch (operator) {
                 case '+': resultDec = num1Dec + num2Dec; break;
                 case '-': resultDec = num1Dec - num2Dec; break;
                 case '*': resultDec = num1Dec * num2Dec; break;
-                case '/': resultDec = num1Dec / num2Dec; break; // หารแบบปกติเพื่อให้ได้ทศนิยม
+                case '/': resultDec = num1Dec / num2Dec; break;
             }
             
-            // 3. แปลงผลลัพธ์กลับเป็นฐานที่ต้องการ
             const finalResult = fromDecimal(resultDec, baseResult);
-
-            // 4. แสดงผลลัพธ์และวิธีคิด
             resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
 
-            let steps = `<h3>วิธีคิด: แปลงทุกค่าเป็นฐาน 10</h3>`;
-            steps += `1. แปลงตัวเลขเป็นฐาน 10 (ทศนิยม):\n`;
-            steps += `   (${num1Str})<sub>${base1}</sub>  =>  ${num1Dec.toFixed(6)}<sub>10</sub>\n`;
-            steps += `   (${num2Str})<sub>${base2}</sub>  =>  ${num2Dec.toFixed(6)}<sub>10</sub>\n\n`;
-            steps += `2. คำนวณในฐาน 10:\n`;
-            steps += `   ${num1Dec.toFixed(6)} ${operator} ${num2Dec.toFixed(6)}  =  ${resultDec.toFixed(6)}\n\n`;
-            steps += `3. แปลงผลลัพธ์เป็นฐาน ${baseResult}:\n`;
-            steps += `   (${resultDec.toFixed(6)})<sub>10</sub>  =>  ${finalResult}<sub>${baseResult}</sub>`;
+            stepsMethod1.innerHTML = getMethod1Steps(num1Dec, num2Dec, resultDec, operator, baseResult, finalResult);
+            stepsMethod2.innerHTML = getMethod2Steps(num1Str, base1, num2Str, base2, operator, finalResult);
+            stepsMethod3.innerHTML = getMethod3Steps(num1Str, base1, num2Str, base2);
             
-            stepsElement.innerHTML = steps;
-            stepsElement.style.display = 'block';
+            stepsContainer.style.display = 'block';
+        }
+
+        // --- วิธีที่ 1: แปลงเป็นฐาน 10 (สรุป) ---
+        function getMethod1Steps(num1Dec, num2Dec, resultDec, operator, baseResult, finalResult) {
+            let steps = `<h3>วิธีที่ 1: แปลงเป็นฐาน 10 (วิธีมาตรฐาน)</h3>`;
+            steps += `1. แปลงค่าเป็นฐาน 10:\n`;
+            steps += `   ตัวตั้ง: ${num1Dec.toFixed(6)}<sub>10</sub>\n`;
+            steps += `   ตัวดำเนินการ: ${num2Dec.toFixed(6)}<sub>10</sub>\n\n`;
+            steps += `2. คำนวณในฐาน 10:\n`;
+            steps += `   ${num1Dec.toFixed(6)} ${operator} ${num2Dec.toFixed(6)} = ${resultDec.toFixed(6)}\n\n`;
+            steps += `3. แปลงผลลัพธ์เป็นฐาน ${baseResult}:\n`;
+            steps += `   (${resultDec.toFixed(6)})<sub>10</sub> => ${finalResult}<sub>${baseResult}</sub>`;
+            return steps;
+        }
+
+        // --- วิธีที่ 2: ตั้งคำนวณโดยตรง (บวก/ลบ ฐานเดียวกัน) ---
+        function getMethod2Steps(num1Str, base1, num2Str, base2, operator, finalResult) {
+            if (base1 !== base2 || (operator !== '+' && operator !== '-')) {
+                return `<h3>วิธีที่ 2: คำนวณโดยตรง</h3>` + `วิธีนี้จะแสดงเฉพาะการบวกและลบเลขฐานเดียวกันเท่านั้น`;
+            }
+
+            let steps = `<h3>วิธีที่ 2: คำนวณโดยตรงในฐาน ${base1}</h3>`;
+            const [int1, frac1 = ''] = num1Str.split('.');
+            const [int2, frac2 = ''] = num2Str.split('.');
+            const maxFrac = Math.max(frac1.length, frac2.length);
+            const alignedNum1 = int1.padStart(Math.max(int1.length, int2.length), ' ') + '.' + frac1.padEnd(maxFrac, '0');
+            const alignedNum2 = int2.padStart(Math.max(int1.length, int2.length), ' ') + '.' + frac2.padEnd(maxFrac, '0');
+            
+            steps += `  ${alignedNum1}\n`;
+            steps += ` ${operator}${alignedNum2}\n`;
+            steps += `-`.repeat(alignedNum1.length + 2) + `\n`;
+            steps += `  ${finalResult.padStart(alignedNum1.length, ' ')}\n`;
+            
+            if (operator === '+') {
+                steps += `\nคำอธิบาย: บวกเลขจากขวาไปซ้าย หากผลรวมหลักใดเท่ากับหรือเกิน ${base1} ให้ใส่ผลลบด้วย ${base1} แล้วทด 1 ไปยังหลักถัดไป`;
+            } else {
+                 steps += `\nคำอธิบาย: ลบเลขจากขวาไปซ้าย หากตัวตั้งน้อยกว่าตัวลบ ให้ยืมค่า ${base1} จากหลักถัดไป`;
+            }
+            return steps;
+        }
+        
+        // --- วิธีที่ 3: กระจายค่าประจำหลัก ---
+        function getMethod3Steps(num1Str, base1, num2Str, base2) {
+            let steps = `<h3>วิธีที่ 3: แปลงเป็นฐาน 10 (แบบกระจายค่า)</h3>`;
+            steps += `<b>ตัวตั้ง: (${num1Str})<sub>${base1}</sub></b>\n`;
+            steps += getPolynomial(num1Str, base1) + `\n\n`;
+            steps += `<b>ตัวดำเนินการ: (${num2Str})<sub>${base2}</sub></b>\n`;
+            steps += getPolynomial(num2Str, base2);
+            return steps;
+        }
+
+        function getPolynomial(numStr, base) {
+            const [integerPart, fractionalPart = ''] = numStr.split('.');
+            let expansion = [];
+            
+            // Integer part
+            for (let i = 0; i < integerPart.length; i++) {
+                const digit = DIGITS.indexOf(integerPart[i]);
+                const power = integerPart.length - 1 - i;
+                expansion.push(`(${digit} * ${base}<sup>${power}</sup>)`);
+            }
+            // Fractional part
+            for (let i = 0; i < fractionalPart.length; i++) {
+                const digit = DIGITS.indexOf(fractionalPart[i]);
+                const power = -(i + 1);
+                expansion.push(`(${digit} * ${base}<sup>${power}</sup>)`);
+            }
+            return expansion.join(' + ');
         }
     </script>
 
