@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องคำนวณเลขฐาน</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+        .calculator-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .input-row input {
+            flex-grow: 1; /* ทำให้ช่อง input ขยายเต็มพื้นที่ */
+            text-align: right;
+        }
+        .input-row select {
+            flex-basis: 70px; /* กำหนดความกว้างของตัวเลือก */
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            text-align: left;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            word-wrap: break-word;
+        }
+        #calculation-steps {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <h1>เครื่องคำนวณเลขฐาน</h1>
+
+        <label for="base">เลือกฐาน:</label>
+        <select id="base" style="margin-bottom: 1rem;">
+            <option value="2">ฐาน 2 (Binary)</option>
+            <option value="8">ฐาน 8 (Octal)</option>
+            <option value="10" selected>ฐาน 10 (Decimal)</option>
+            <option value="16">ฐาน 16 (Hexadecimal)</option>
+        </select>
+
+        <div class="input-row">
+            <input type="text" id="number1" placeholder="ตัวเลขที่ 1">
+            <select id="operator">
+                <option value="+">+</option>
+                <option value="-">-</option>
+            </select>
+            <input type="text" id="number2" placeholder="ตัวเลขที่ 2">
+        </div>
+
+        <button onclick="calculate()">คำนวณ</button>
+
+        <div id="result"></div>
+        <div id="calculation-steps"></div>
+    </div>
+
+    <script>
+        function calculate() {
+            const base = parseInt(document.getElementById('base').value);
+            const num1Str = document.getElementById('number1').value.trim();
+            const num2Str = document.getElementById('number2').value.trim();
+            const operator = document.getElementById('operator').value;
+
+            const resultElement = document.getElementById('result');
+            const stepsElement = document.getElementById('calculation-steps');
+            
+            stepsElement.style.display = 'none'; // ซ่อนวิธีคิดก่อน
+
+            if (!num1Str || !num2Str) {
+                resultElement.textContent = "กรุณาป้อนตัวเลขให้ครบทั้งสองช่อง";
+                return;
+            }
+
+            // --- หลักการ: แปลงเป็นฐาน 10 -> คำนวณ -> แปลงกลับเป็นฐานเดิม ---
+
+            // 1. แปลงตัวเลขทั้งสองเป็นฐาน 10
+            const num1Dec = parseInt(num1Str, base);
+            const num2Dec = parseInt(num2Str, base);
+
+            if (isNaN(num1Dec) || isNaN(num2Dec)) {
+                resultElement.textContent = "ค่าที่ป้อนไม่ถูกต้องสำหรับฐานที่เลือก";
+                return;
+            }
+
+            // 2. คำนวณในรูปแบบฐาน 10
+            let resultDec;
+            if (operator === '+') {
+                resultDec = num1Dec + num2Dec;
+            } else {
+                resultDec = num1Dec - num2Dec;
+            }
+            
+            // 3. แปลงผลลัพธ์กลับเป็นฐานเดิม
+            const finalResult = resultDec.toString(base).toUpperCase();
+
+            // 4. แสดงผลลัพธ์และวิธีคิด
+            resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
+
+            let steps = `วิธีคิด:\n`;
+            steps += `1. แปลงตัวเลขเป็นฐาน 10:\n`;
+            steps += `   (${num1Str}) ฐาน ${base}  =>  ${num1Dec}\n`;
+            steps += `   (${num2Str}) ฐาน ${base}  =>  ${num2Dec}\n\n`;
+            steps += `2. คำนวณในฐาน 10:\n`;
+            steps += `   ${num1Dec} ${operator} ${num2Dec}  =  ${resultDec}\n\n`;
+            steps += `3. แปลงผลลัพธ์กลับเป็นฐาน ${base}:\n`;
+            steps += `   (${resultDec}) ฐาน 10  =>  ${finalResult}`;
+
+            stepsElement.textContent = steps;
+            stepsElement.style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
