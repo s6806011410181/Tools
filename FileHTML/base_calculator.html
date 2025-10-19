@@ -21,7 +21,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             width: 90%;
-            max-width: 500px;
+            max-width: 600px; /* ขยายความกว้าง */
             text-align: center;
         }
         h1 {
@@ -35,11 +35,8 @@
             margin-bottom: 1rem;
         }
         .input-row input {
-            flex-grow: 1; /* ทำให้ช่อง input ขยายเต็มพื้นที่ */
+            flex-grow: 1;
             text-align: right;
-        }
-        .input-row select {
-            flex-basis: 70px; /* กำหนดความกว้างของตัวเลือก */
         }
         label {
             display: block;
@@ -76,16 +73,25 @@
             font-weight: bold;
             word-wrap: break-word;
         }
-        #calculation-steps {
+        /* ===== CSS สำหรับกล่องวิธีทำ ===== */
+        .steps-container {
             margin-top: 1.5rem;
+            text-align: left;
+            display: none; /* ซ่อนตอนแรก */
+        }
+        .step-box {
             padding: 1rem;
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 5px;
-            text-align: left;
             font-family: monospace;
             white-space: pre-wrap;
-            display: none;
+            margin-top: 10px;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            font-family: Arial, sans-serif;
+            color: #0056b3;
         }
     </style>
 </head>
@@ -114,62 +120,94 @@
         <button onclick="calculate()">คำนวณ</button>
 
         <div id="result"></div>
-        <div id="calculation-steps"></div>
+        
+        <div class="steps-container" id="stepsContainer">
+            <div class="step-box" id="stepsMethod1"></div>
+            <div class="step-box" id="stepsMethod2"></div>
+        </div>
     </div>
 
     <script>
+        // --- ฟังก์ชันหลัก ---
         function calculate() {
             const base = parseInt(document.getElementById('base').value);
-            const num1Str = document.getElementById('number1').value.trim();
-            const num2Str = document.getElementById('number2').value.trim();
+            const num1Str = document.getElementById('number1').value.trim().toUpperCase();
+            const num2Str = document.getElementById('number2').value.trim().toUpperCase();
             const operator = document.getElementById('operator').value;
 
             const resultElement = document.getElementById('result');
-            const stepsElement = document.getElementById('calculation-steps');
+            const stepsContainer = document.getElementById('stepsContainer');
+            const stepsMethod1 = document.getElementById('stepsMethod1');
+            const stepsMethod2 = document.getElementById('stepsMethod2');
             
-            stepsElement.style.display = 'none'; // ซ่อนวิธีคิดก่อน
+            stepsContainer.style.display = 'none';
 
             if (!num1Str || !num2Str) {
                 resultElement.textContent = "กรุณาป้อนตัวเลขให้ครบทั้งสองช่อง";
                 return;
             }
 
-            // --- หลักการ: แปลงเป็นฐาน 10 -> คำนวณ -> แปลงกลับเป็นฐานเดิม ---
-
-            // 1. แปลงตัวเลขทั้งสองเป็นฐาน 10
+            // --- คำนวณ (ใช้ parseInt/toString เป็นหลัก) ---
             const num1Dec = parseInt(num1Str, base);
             const num2Dec = parseInt(num2Str, base);
-
+            
             if (isNaN(num1Dec) || isNaN(num2Dec)) {
                 resultElement.textContent = "ค่าที่ป้อนไม่ถูกต้องสำหรับฐานที่เลือก";
                 return;
             }
-
-            // 2. คำนวณในรูปแบบฐาน 10
-            let resultDec;
-            if (operator === '+') {
-                resultDec = num1Dec + num2Dec;
-            } else {
-                resultDec = num1Dec - num2Dec;
-            }
             
-            // 3. แปลงผลลัพธ์กลับเป็นฐานเดิม
+            let resultDec = (operator === '+') ? (num1Dec + num2Dec) : (num1Dec - num2Dec);
             const finalResult = resultDec.toString(base).toUpperCase();
 
-            // 4. แสดงผลลัพธ์และวิธีคิด
+            // --- แสดงผลลัพธ์ ---
             resultElement.innerHTML = `ผลลัพธ์: <span style="color: black;">${finalResult}</span>`;
 
-            let steps = `วิธีคิด:\n`;
+            // --- สร้างวิธีทำ ---
+            stepsMethod1.innerHTML = getMethod1Steps(num1Str, num2Str, num1Dec, num2Dec, resultDec, operator, base, finalResult);
+            stepsMethod2.innerHTML = getMethod2Steps(num1Str, num2Str, operator, base, finalResult);
+            
+            stepsContainer.style.display = 'block';
+        }
+
+        // --- วิธีทำแบบที่ 1: แปลงเป็นฐาน 10 ---
+        function getMethod1Steps(num1Str, num2Str, num1Dec, num2Dec, resultDec, operator, base, finalResult) {
+            let steps = `<h3>วิธีที่ 1: แปลงเป็นฐาน 10</h3>`;
             steps += `1. แปลงตัวเลขเป็นฐาน 10:\n`;
-            steps += `   (${num1Str}) ฐาน ${base}  =>  ${num1Dec}\n`;
-            steps += `   (${num2Str}) ฐาน ${base}  =>  ${num2Dec}\n\n`;
+            steps += `   (${num1Str})<sub>${base}</sub>  =>  ${num1Dec}<sub>10</sub>\n`;
+            steps += `   (${num2Str})<sub>${base}</sub>  =>  ${num2Dec}<sub>10</sub>\n\n`;
             steps += `2. คำนวณในฐาน 10:\n`;
             steps += `   ${num1Dec} ${operator} ${num2Dec}  =  ${resultDec}\n\n`;
             steps += `3. แปลงผลลัพธ์กลับเป็นฐาน ${base}:\n`;
-            steps += `   (${resultDec}) ฐาน 10  =>  ${finalResult}`;
+            steps += `   (${resultDec})<sub>10</sub>  =>  ${finalResult}<sub>${base}</sub>`;
+            return steps;
+        }
 
-            stepsElement.textContent = steps;
-            stepsElement.style.display = 'block';
+        // --- วิธีทำแบบที่ 2: คำนวณโดยตรง ---
+        function getMethod2Steps(num1Str, num2Str, operator, base, finalResult) {
+            let steps = `<h3>วิธีที่ 2: คำนวณโดยตรงในฐาน ${base}</h3>`;
+            
+            // จัดตำแหน่งตัวเลขให้ตรงกัน
+            const maxLength = Math.max(num1Str.length, num2Str.length);
+            const paddedNum1 = num1Str.padStart(maxLength, '0');
+            const paddedNum2 = num2Str.padStart(maxLength, '0');
+            const paddedResult = finalResult.padStart(maxLength, '0');
+            const line = '-'.repeat(maxLength + 2);
+
+            steps += `  ${paddedNum1}\n`;
+            steps += ` ${operator}${paddedNum2}\n`;
+            steps += `${line}\n`;
+            steps += `  ${paddedResult}\n${line}\n`;
+
+            if (base === 10) {
+                 steps += "\nคำอธิบาย: การคำนวณในฐาน 10 เป็นการคำนวณตามปกติ";
+            } else if (operator === '+') {
+                steps += "\nคำอธิบาย (การบวก):\n";
+                steps += `บวกเลขจากขวาไปซ้ายทีละหลัก หากผลรวมมากกว่าหรือเท่ากับ ${base} ให้ใส่ผลลบด้วย ${base} แล้วทด 1 ไปยังหลักถัดไป`;
+            } else {
+                 steps += "\nคำอธิบาย (การลบ):\n";
+                 steps += `ลบเลขจากขวาไปซ้ายทีละหลัก หากตัวตั้งน้อยกว่าตัวลบ ให้ยืมค่าจากหลักถัดไปมา ${base} แล้วจึงนำมาลบ`;
+            }
+            return steps;
         }
     </script>
 
