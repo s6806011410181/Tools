@@ -2,4 +2,3 @@
 เครื่องคำนวณเลขฐาน,FileHTML/base_calculator.html
 
 Coming soon,modal
-Coming soon,modal
